@@ -57,7 +57,7 @@ exit        Quit the program
 if you want to run the HTTP beacon on a different port/interface, use the `HTTP_ADDR` enviroment
 variable, for example:
 ```
-TTP_ADDR=127.0.0.1:1234 ezcat
+HTTP_ADDR=127.0.0.1:1234 ezcat
 ```
 #### HTTPS Beacon
 In order to run the beacon over HTTPS, you can setup nginx or a similar proxy service,
