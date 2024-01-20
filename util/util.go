@@ -62,8 +62,14 @@ func GetAddr(addrs []net.Addr) string {
   for _, a := range addrs {
     switch v := a.(type) {
     case *net.IPNet:
+      if strings.Contains(v.IP.String(), ":") {
+        continue
+      }
       return v.IP.String()
     case *net.IPAddr:
+      if strings.Contains(v.IP.String(), ":") {
+        continue
+      }
       return v.IP.String()
     }
   }
