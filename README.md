@@ -1,6 +1,9 @@
 # ezcat 🐱 easy shell handler
 ezcat allows you to manage multiple reverse shells 
-with a simple web interface.
+with a simple web interface
+
+### showcase
+![](/assets/showcase.gif)
 
 ### install 
 an easy way install ezcat is to use docker:
