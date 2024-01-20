@@ -1,0 +1,127 @@
+header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--background2);
+  padding: 15px 10% 15px 10%;
+  box-shadow: (--box-shadow);
+}
+
+@media only screen and (max-width: 1100px) {
+  header {
+    padding: 15px 15px 15px 15px;
+  }
+}
+
+.header-div {
+  display: block;
+  text-align: right;
+}
+
+.logo h1{
+  font-size: 30px;
+  text-align: left;
+}
+
+.header-div button {
+  width: max-content;
+}
+
+@media only screen and (max-width: 900px) {
+  .header-div button, .header-div input {
+    margin-top: 5px;
+  }
+}
+
+.list {
+  padding: 10%;
+  padding-top: 30px;
+  padding-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.list-empty {
+  text-align: center;
+  width: 100%;
+  opacity: 50%;
+}
+
+.list-empty h1 {
+  margin-bottom: 10px;
+}
+
+.list-empty img {
+  border-radius: var(--radius);
+  width: 300px;
+}
+
+.shell {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 25px;
+  border-radius: var(--radius);
+  background: var(--background2);
+  box-shadow: var(--box-shadow);
+}
+
+.shell-data, .shell-links {
+  display: flex; 
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+
+.shell-links {
+  gap: 10px;
+}
+
+.shell-links a{
+  font-size: 22px;
+  text-align: right;
+}
+
+.shell-links button{
+  padding: 10px;
+}
+
+.btn-run {
+  background: #004000;
+} 
+
+.btn-clean {
+  background: #400000;
+}
+
+.shell-data h1{
+  font-size: 30px;
+  text-shadow: var(--text-shadow);
+}
+
+.msg-success, .msg-error {
+  border-radius: var(--radius);
+  padding: 25px;
+  box-shadow: var(--box-shadow);
+  color: white;
+}
+
+.msg-success h1, .msg-error h1{
+  text-shadow: var(--text-shadow);
+  font-size: 30px;
+}
+
+.msg-success h3, .msg-error h3{
+  font-size: 20px;
+}
+
+.msg-success {
+  background: #004000;
+}
+
+.msg-error {
+  background: #400000;
+}

@@ -1,0 +1,30 @@
+.login-div {
+  font-family: Monospace;
+}
+
+.login-div {
+  background: var(--background2);
+  border-radius: var(--radius); 
+  box-shadow: var(--box-shadow); 
+  padding: 30px;
+
+  position: absolute;
+  transform: translate(-50%, -50%);
+  left: 50%;
+  top: 50%;
+}
+
+.login-div h1{
+  margin-bottom: 20px;
+  text-align: center;
+  color: white;
+}
+
+.login-div input{
+  margin-bottom: 10px;
+}
+
+.error {
+  text-align: center;
+  margin-top: 20px;
+}

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ezcat | login</title>
+    <link href="/static/cat.svg" rel="icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1024">
+    <link href="/static/global.css" rel="stylesheet">
+    <link href="/static/login.css" rel="stylesheet">
+  </head>
+  <body>  
+    <div class="login-div">
+      <a class="logo" href="https://github.com/ngn13/ezcat"><h1>🐱 ezcat</h1></a>
+      <form action="/" method="POST">
+        <input name="password" type="password" placeholder="password" autofocus>  
+        </br>
+        <button type="submit">🔓 login</button>
+      </form>
+      {{if .failed}} 
+        <p class="error">login failed</p>
+      {{end}}
+    </div>
+  </body>
+</html>

@@ -1,97 +1,59 @@
 /*
+ *  ezcat | easy reverse shell handler
+ *  written by ngn (https://ngn.tf) (2024)
  *
- *  ezcat | easy netcat revshell handler
- *  =====================================
- *  this program is licensed under GNU
- *  General Public License Version 2
- *  (GPLv2), please see LICENSE.txt
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
  *
- *  written by ngn - https://ngn13.fun
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
-*/
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
 
 package main
 
 import (
-	"strings"
-
-	"github.com/c-bata/go-prompt"
-	"github.com/ngn13/ezcat/bridge"
-	"github.com/ngn13/ezcat/cmds"
-	"github.com/ngn13/ezcat/http"
-	"github.com/ngn13/ezcat/term"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/template/html/v2"
+	"github.com/ngn13/ezcat/log"
+	"github.com/ngn13/ezcat/routes"
 )
 
-func completer(d prompt.Document) []prompt.Suggest {
-  suggestions := []prompt.Suggest{}
-  text := d.TextBeforeCursor()
+func main() {
+  engine := html.New("./views", ".html")
+  app := fiber.New(fiber.Config{
+    Views: engine,
+    AppName: "ezcat",
+    DisableStartupMessage: true,
+  })
 
-  if text == "" {
-    return suggestions
-  }
+  // static files
+  app.Static("static", "./static")
 
-  if text == "shell" || 
-    text == "upload" || 
-    text == "download" {
-    for _, s := range bridge.SHELLS {
-      if !s.Connected {
-        continue
-      }
-      suggestions = append(suggestions, prompt.Suggest{Text: text+" "+s.ID})
-    }
-  }
+  // admin routes
+  app.Get("/", routes.GETLogin)
+  app.Post("/", routes.POSTLogin)
+  app.Use("/admin/*", routes.MIDAdmin)
+  app.Get("/admin", routes.GETAdmin)
+  app.Get("/admin/status", routes.GETStatus)
+  app.Get("/admin/run", routes.GETRun)
+  app.Post("/admin/run", routes.POSTRun)
+  app.Get("/admin/clean", routes.GETClean)
+  app.Get("/logout", routes.GETLogout)
 
-  return suggestions
-}
+  // shell routes
+  app.Use("/shell/*", routes.MIDShell)
+  app.Get("/shell/job", routes.GETJob)
+  app.Post("/shell/result", routes.POSTRes)
 
-func main(){
-  go http.Listen()
-  cmds.LoadCmds()
-  term.PrintBanner()
-  term.Cyan("\nStarting HTTP beacon at %s", bridge.GetAddr())
-  term.Newline()
-
-  p := prompt.New(
-    nil,
-    completer,
-    prompt.OptionPrefix("[ezcat]# "),
-    prompt.OptionPrefixTextColor(prompt.Red),
-    prompt.OptionSuggestionBGColor(prompt.DarkRed),
-    prompt.OptionSuggestionTextColor(prompt.White),
-    prompt.OptionDescriptionBGColor(prompt.DarkRed),
-    prompt.OptionDescriptionTextColor(prompt.White),
-    prompt.OptionSelectedSuggestionBGColor(prompt.Red),
-    prompt.OptionSelectedDescriptionBGColor(prompt.Red),
-    prompt.OptionScrollbarThumbColor(prompt.Black),
-  )
-
-  for {
-    inp := p.Input()
-    ran := false
-
-    if inp == "exit" {
-      break
-    }
-
-    args := strings.Split(inp, " ")
-    cmd := args[0]
-    args = append(args[:0], args[1:]...)
-
-    if cmd == "" {
-      continue
-    }
-
-    for _, c := range cmds.CMDS {
-      if c.Name == cmd {
-        c.Func(args)
-        ran = true
-      }
-    }
-
-    if ran {
-      continue
-    }
-
-    term.Error("Command not found!")
-  }
+  log.Info("Starting ezcat 🐱")
+  log.Info("Visit http://127.0.0.1:5566")
+  log.Err(app.Listen(":5566").Error())
 }

@@ -1,0 +1,71 @@
+@import "https://www.nerdfonts.com/assets/css/webfont.css";
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: monospace;
+}
+
+:root {
+  --background1: black;
+  --background2: #121212;
+  --box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+  --text-shadow: 32px 7px 5px rgba(0,0,0,0.3), 
+    0px -4px 30px rgba(255,255,255, 0.4);
+  --padding: 12px 15px 12px 15px;
+  --radius: 7px; 
+}
+
+body {
+  background: var(--background1);
+}
+
+h1 {
+  color: white;
+  font-size: 40px;
+}
+
+p {
+  color: white;
+  font-size: 20px;
+}
+
+a {
+  color: white;
+  text-decoration: none;
+  font-size: 20px;
+  text-shadow: var(--text-shadow);
+}
+
+a button {
+  color: white;
+  text-shadow: none;
+  text-decoration: none;
+  font-size: 20px;
+}
+
+input{
+  padding: var(--padding); 
+  background: var(--background1);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  outline: none;
+  font-size: 20px;
+}
+
+button{
+  padding: var(--padding); 
+  background: var(--background1);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 20px;
+  cursor: pointer;
+  width: 100%;
+  transition: .4s;
+}
+
+button:hover {
+  box-shadow: var(--box-shadow);
+}
