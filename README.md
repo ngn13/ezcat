@@ -13,6 +13,8 @@ docker run --rm --network host \
 or you can download the latest binary from the [releases tab](https://github.com/ngn13/ezcat/releases),
 extract it with `tar` and then copy it to somewhere in your `PATH`.
 
+---
+
 ### ⚒️ Build
 To build ezcat, install a recent version go. Then clone the repository and run the go build command:
 ```bash
