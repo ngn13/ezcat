@@ -4,7 +4,7 @@
 ---
 
 ### 🚀 Install 
-An easy way install ezcat is to use docker:
+An easy way to install ezcat is to use docker:
 ```
 docker run --rm --network host \
     -e PASSWORD=securepassword \
