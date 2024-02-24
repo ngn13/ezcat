@@ -20,7 +20,6 @@ docker run --rm --network host \
     -e PASSWORD=securepassword \
     -e SHELLIP=10.10.10.15     \
     ghcr.io/ngn13/ezcat
-
 ```
 
 ---
