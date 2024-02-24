@@ -1,4 +1,4 @@
-FROM golang:1.21.6
+FROM golang:1.21.6 as build
 
 WORKDIR /app
 
@@ -13,9 +13,13 @@ COPY util ./util
 COPY views ./views
 
 EXPOSE 5566 
-RUN go build .
+RUN CGO_ENABLED=0 go build .
+
+FROM alpine as main
+COPY --from=build /app /app
 
 ARG PASSWORD
 ENV PASSWORD $PASSWORD
+WORKDIR /app
 
 ENTRYPOINT ["/app/ezcat"]

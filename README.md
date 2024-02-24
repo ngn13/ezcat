@@ -13,6 +13,16 @@ docker run --rm --network host \
 or you can download the latest binary from the [releases tab](https://github.com/ngn13/ezcat/releases),
 extract it with `tar` and then copy it to somewhere in your `PATH`.
 
+By default ezcat will try to detect your interface IP address (giving priority to tunnel interfaces).
+If you want set this IP address to something else by default, you can use the `SHELLIP` environment variable:
+```
+docker run --rm --network host \
+    -e PASSWORD=securepassword \
+    -e SHELLIP=10.10.10.15     \
+    ghcr.io/ngn13/ezcat
+
+```
+
 ---
 
 ### ⚒️ Build
