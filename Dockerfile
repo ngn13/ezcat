@@ -17,6 +17,7 @@ COPY app /app
 WORKDIR /app
 
 ENV VITE_API_URL_DEV "http://127.0.0.1:5566"
+RUN npm install
 RUN npm run build
 
 #####################
