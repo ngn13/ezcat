@@ -1,7 +1,12 @@
 version: 2
 updates:
   - package-ecosystem: "gomod"
-    directory: "/"
+    directory: "/server"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "npm"
+    directory: "/app"
     schedule:
       interval: "daily"
 
