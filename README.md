@@ -1,5 +1,5 @@
 # ezcat 🐱 easy reverse shell handler
-![](/assets/showcase.gif)
+https://github.com/ngn13/ezcat/assets/78868991/75c3c7c5-6768-47e4-9ef1-0a9e66710773
 
 ---
 
