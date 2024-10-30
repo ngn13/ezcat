@@ -3,6 +3,10 @@ https://github.com/ngn13/ezcat/assets/78868991/75c3c7c5-6768-47e4-9ef1-0a9e66710
 
 ---
 
+> [!NOTE]
+> I'm migrating the agent communication from DNS to TCP because there is really no reason to use DNS
+> since the reverse shell connection goes over plain TCP anyway, [see this PR](https://github.com/ngn13/ezcat/pull/82)
+
 ### 📋 Features
 - Easy to install
 - Simple web interface
