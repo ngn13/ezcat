@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/ngn13/ezcat/server/agent"
@@ -10,86 +11,94 @@ import (
 )
 
 func GET_agents(c *fiber.Ctx) error {
-  var res []agent.Data
-  agent.Clean()
+	list := c.Locals("agents").(*agent.List)
+	list.Update()
 
-  for i := range agent.List {
-    cur := &agent.List[i]
-
-    if !cur.Active {
-      continue
-    }
-
-    if cur.Username == "" || cur.Hostname == "" {
-      log.Debug("Not listing %s (info not received yet)", cur.ID)
-      continue
-    }
-
-    res = append(res, cur.Data())
-  }
-
-  return c.JSON(&fiber.Map{
-    "list": res,
-  })
+	return c.JSON(&fiber.Map{
+		"list": list,
+	})
 }
 
 func PUT_run(c *fiber.Ctx) error {
-  agent.Clean()
+	var (
+		data map[string]string
 
-  var data map[string]string
-  if err := c.BodyParser(&data); err != nil {
-    return util.ErrorCode(c, 400)
-  }
+		list *agent.List
+		ag   *agent.Agent
 
-  if data["address"] == "" || data["id"] == "" {
-    return util.ErrorCode(c, 400)
-  }
+		id   uint64
+		ip   string
+		port uint16
+		err  error
+	)
 
-  ip, port, err := util.ParseAddr(data["address"])
-  if err != nil {
-    return util.ErrorCode(c, 400)
-  }
+	list = c.Locals("agents").(*agent.List)
+	list.Update()
 
-  a := agent.Get(data["id"])
-  if a == nil {
-    return util.ErrorCode(c, 404)
-  }
+	if err = c.BodyParser(&data); err != nil {
+		log.Debg("failed to parse the body: %s", err.Error())
+		return util.ErrorCode(c, 400)
+	}
 
-  if !a.Active {
-    return util.Error(c, "Agent is not active")
-  }
+	if data["address"] == "" || data["id"] == "" {
+		return util.ErrorCode(c, 400)
+	}
 
-  work := a.AddWork(agent.CMD_RUN, fmt.Sprintf("%s:%d", ip, port), nil)
-  return c.JSON(&fiber.Map{
-    "job": work.Job.ID,
-  })
+	if ip, port, err = util.ParseAddr(data["address"]); err != nil {
+		log.Debg("failed to parse the address: %s", err.Error())
+		return util.ErrorCode(c, 400)
+	}
+
+	if id, err = strconv.ParseUint(data["session"], 10, 32); err != nil {
+		log.Debg("failed to parse ID: %s", err.Error())
+		return util.ErrorCode(c, 400)
+	}
+
+	if ag = list.Find(uint32(id)); ag == nil {
+		return util.ErrorCode(c, 404)
+	}
+
+	if !ag.Conneceted {
+		return util.Error(c, "agent is not active")
+	}
+
+	job := ag.AddJob(agent.CMD_RUN, fmt.Sprintf("%s:%d", ip, port), nil)
+
+	return c.JSON(&fiber.Map{
+		"job": job.ID,
+	})
 }
 
-func KillCallack(w *agent.Work) {
-  a := agent.Get(w.Session)
-  agent.DefaultCallack(w)
-  a.Deactivate()
+func KillCallack(j *agent.Job) {
+	j.Agent.ShouldKill = true
 }
 
 func GET_kill(c *fiber.Ctx) error {
-  agent.Clean()
-  id := c.Query("id")
+	var (
+		ag  *agent.Agent
+		id  uint64
+		err error
+	)
 
-  if id == "" {
-    return util.ErrorCode(c, 400)
-  }
+	list := c.Locals("agents").(*agent.List)
+	list.Update()
 
-  a := agent.Get(id)
-  if a == nil {
-    return util.ErrorCode(c, 404)
-  }
+	if id, err = strconv.ParseUint(c.Query("session"), 10, 32); err != nil {
+		log.Debg("failed to parse ID: %s", err.Error())
+		return util.ErrorCode(c, 400)
+	}
 
-  if !a.Active {
-    return util.Error(c, "Agent is not active")
-  }
+	if ag = list.Find(uint32(id)); ag == nil {
+		return util.ErrorCode(c, 404)
+	}
 
-  work := a.AddWork(agent.CMD_KILL, "plz", KillCallack)
-  return c.JSON(&fiber.Map{
-    "job": work.Job.ID,
-  })
+	if !ag.Conneceted {
+		return util.Error(c, "agent is not active")
+	}
+
+	job := ag.AddJob(agent.CMD_KILL, "plz", KillCallack)
+
+	return c.JSON(&fiber.Map{
+		"job": job.ID,
+	})
 }

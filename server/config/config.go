@@ -1,48 +1,112 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"reflect"
 	"strconv"
 
-	"github.com/ngn13/ezcat/server/global"
-	"github.com/ngn13/ezcat/server/log"
 	"github.com/ngn13/ezcat/server/util"
 )
 
-func Load() {
-  var err error
+type Struct struct {
+	Version    string // not modifiable
+	HTTP_Port  int    `env:"HTTP_PORT"`
+	C2_Port    int    `env:"C2_PORT"`
+	Password   string `env:"PASSWORD"`
+	StaticDir  string `env:"STATIC_DIR"`
+	DistDir    string `env:"DIST_DIR"`
+	PayloadDir string `env:"PAYLOAD_DIR"`
+	Megamind   bool   `env:"MEGAMIND"`
+	Debug      bool   `env:"DEBUG"`
+}
 
-  global.CONFIG_HTTPPORT, err = strconv.Atoi(os.Getenv("HTTP_PORT"))
-  if err != nil || !util.IsValidPort(global.CONFIG_HTTPPORT) {
-    global.CONFIG_HTTPPORT = 5566
-  }
+func (conf *Struct) Load() error {
+	var (
+		val reflect.Value
+		typ reflect.Type
 
-  global.CONFIG_AGENTPORT, err = strconv.Atoi(os.Getenv("AGENT_PORT"))
-  if err != nil || !util.IsValidPort(global.CONFIG_AGENTPORT) {
-    global.CONFIG_AGENTPORT = 1053
-  }
+		field_val reflect.Value
+		field_typ reflect.StructField
 
-  global.CONFIG_PASSWORD = os.Getenv("PASSWORD")
-  if global.CONFIG_PASSWORD == "" {
-    log.Warn("Using the default password (very insecure, change it using the PASSWORD environment variable)")
-    global.CONFIG_PASSWORD = "ezcat"
-  }
+		env_name string
+		env_val  string
 
-  global.CONFIG_STATICDIR = os.Getenv("STATIC_DIR")
-  if global.CONFIG_STATICDIR == "" {
-    log.Warn("STATICDIR is not set, only serving the API")
-  }
+		err error
+		ok  bool
+	)
 
-  global.CONFIG_DATADIR = os.Getenv("DATA_DIR")
-  if global.CONFIG_DATADIR == "" {
-    global.CONFIG_DATADIR = "./data"
-  }
+	val = reflect.ValueOf(conf).Elem()
+	typ = val.Type()
 
-  global.CONFIG_PAYLOADDIR = os.Getenv("PAYLOAD_DIR")
-  if global.CONFIG_PAYLOADDIR == "" {
-    global.CONFIG_PAYLOADDIR = "../payloads"
-  }
+	for i := 0; i < val.NumField(); i++ {
+		field_val = val.Field(i)
+		field_typ = typ.Field(i)
 
-  global.CONFIG_MEGAMIND = os.Getenv("DISABLE_MEGAMIND") != "1"
-  global.CONFIG_DEBUG = os.Getenv("DEBUG") == "1"
+		if env_name, ok = field_typ.Tag.Lookup("env"); !ok || !field_val.CanSet() {
+			continue
+		}
+
+		env_name = fmt.Sprintf("EZCAT_%s", env_name)
+
+		if env_val = os.Getenv(env_name); env_val == "" {
+			continue
+		}
+
+		switch field_val.Kind() {
+		case reflect.String:
+			field_val.SetString(env_val)
+
+		case reflect.Uint16:
+			var env_val_int int
+			if env_val_int, err = strconv.Atoi(env_val); err != nil {
+				return fmt.Errorf("%s should be an integer", env_name)
+			}
+			field_val.SetInt(int64(env_val_int))
+
+		case reflect.Bool:
+			var env_val_bool bool
+			if env_val == "true" || env_val == "1" {
+				env_val_bool = true
+			} else if env_val == "false" || env_val == "0" {
+				env_val_bool = false
+			} else {
+				return fmt.Errorf("%s should be a boolean", env_name)
+			}
+			field_val.SetBool(env_val_bool)
+		}
+	}
+
+	return nil
+}
+
+func New() (*Struct, error) {
+	var (
+		conf Struct
+		err  error
+	)
+
+	conf.Version = "2.4"
+	conf.HTTP_Port = 5566
+	conf.C2_Port = 5567
+	conf.Password = "ezcat"
+	conf.DistDir = "./data"
+	conf.StaticDir = ""
+	conf.PayloadDir = "../payloads"
+	conf.Megamind = true
+	conf.Debug = false
+
+	if err = conf.Load(); err != nil {
+		return nil, err
+	}
+
+	if !util.IsValidPort(conf.HTTP_Port) {
+		return nil, fmt.Errorf("invalid port number for the HTTP port: %d", conf.HTTP_Port)
+	}
+
+	if !util.IsValidPort(conf.C2_Port) {
+		return nil, fmt.Errorf("invalid port number for the C2 port: %d", conf.C2_Port)
+	}
+
+	return &conf, nil
 }

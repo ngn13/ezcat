@@ -21,66 +21,100 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/ngn13/ezcat/server/agent"
+	"github.com/ngn13/ezcat/server/builder"
+	"github.com/ngn13/ezcat/server/c2"
 	"github.com/ngn13/ezcat/server/config"
-	"github.com/ngn13/ezcat/server/global"
 	"github.com/ngn13/ezcat/server/log"
-	"github.com/ngn13/ezcat/server/payload"
 	"github.com/ngn13/ezcat/server/routes"
-	"github.com/ngn13/ezcat/server/util"
 )
 
 func main() {
-  app := fiber.New(fiber.Config{
-    AppName: "ezcat",
-    DisableStartupMessage: true,
-  })
+	var (
+		agents agent.List
+		build  *builder.Struct
+		conf   *config.Struct
+		app    *fiber.App
+		srv    c2.Server
+		err    error
+	)
 
-  // load config from the env
-  config.Load()
-  if global.CONFIG_STATICDIR != "" {
-    app.Static("/", global.CONFIG_STATICDIR)
-  }
+	// load config from the env
+	if conf, err = config.New(); err != nil {
+		log.Fail("failed to load the configuration: %s", err.Error())
+		os.Exit(1)
+	}
 
-  // agent server setup
-  payload.StageLoad()
-  var server agent.AgentServer
-  go server.Start()
+	// load the payload/stage builder
+	if build, err = builder.New(conf); err != nil {
+		log.Fail("failed to create a new builder: %s", err.Error())
+		os.Exit(1)
+	}
 
-  // groups
-  api  := app.Group("/api")
-  user := api.Group("/user")
+	app = fiber.New(fiber.Config{
+		AppName:               "ezcat",
+		DisableStartupMessage: true,
+	})
 
-  // middlewares
-  api.Use("*", util.CORS)
-  user.Use("*", routes.ALL_auth)
+	if conf.StaticDir != "" {
+		app.Static("/", conf.StaticDir)
+	}
 
-  // user API routes
-  user.Get("/logout",      routes.GET_logout)
-  user.Get("/agent/list",  routes.GET_agents)
-  user.Get("/agent/kill",  routes.GET_kill)
-  user.Put("/agent/run",   routes.PUT_run)
+	if !conf.Debug {
+		log.Debg = func(format string, v ...any) {}
+	}
 
-  user.Get("/payload/list",  routes.GET_payloads)
-  user.Get("/payload/addr",  routes.GET_address)
-  user.Put("/payload/build", routes.PUT_build)
+	// groups
+	api := app.Group("/api")
+	user := api.Group("/user")
 
-  user.Get("/job/get",    routes.GET_job)
-  user.Delete("/job/del", routes.DEL_job)
+	// middlewares
+	app.Use(func(c *fiber.Ctx) error {
+		c.Locals("agents", &agents)
+		c.Locals("builder", build)
+		c.Locals("config", conf)
+		return c.Next()
+	})
 
-  // other API routes (no auth needed)
-  api.Get("/info",  routes.GET_info)
-  api.Put("/login", routes.PUT_login)
+	// auth and CORS middlewars
+	api.Use(routes.Auth)
+	user.Use(routes.CORS)
 
-  // payload routes
-  app.Get("/:id",   routes.GET_stage)
+	// user API routes
+	user.Get("/logout", routes.GET_logout)
+	user.Get("/agent/list", routes.GET_agents)
+	user.Get("/agent/kill", routes.GET_kill)
+	user.Put("/agent/run", routes.PUT_run)
 
-  // start the api
-  log.Info("Starting ezcat 🐱(v%s)", routes.VERSION)
-  if global.CONFIG_STATICDIR != "" {
-    log.Info("======> Visit http://127.0.0.1:%d <======", global.CONFIG_HTTPPORT)
-  }
-  log.Err(app.Listen(fmt.Sprintf(":%d", global.CONFIG_HTTPPORT)).Error())
+	user.Get("/payload/list", routes.GET_payloads)
+	user.Get("/payload/addr", routes.GET_address)
+	user.Put("/payload/build", routes.PUT_build)
+
+	user.Get("/job/get", routes.GET_job)
+	user.Delete("/job/del", routes.DEL_job)
+
+	// other API routes (no auth needed)
+	api.Get("/info", routes.GET_info)
+	api.Put("/login", routes.PUT_login)
+
+	// payload routes
+	app.Get("/:id", routes.GET_stage)
+
+	// start the API
+	log.Info("starting ezcat 🐱(v%s)", conf.Version)
+
+	if err = srv.Listen(fmt.Sprintf(":%d", conf.C2_Port)); err != nil {
+		log.Fail("failed to start the C2 server")
+	}
+
+	if conf.StaticDir != "" {
+		log.Info("======> visit http://127.0.0.1:%d <======", conf.HTTP_Port)
+	}
+
+	if err = app.Listen(fmt.Sprintf(":%d", conf.HTTP_Port)); err != nil {
+		log.Fail("failed to start the web server")
+	}
 }
