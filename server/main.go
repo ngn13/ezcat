@@ -38,7 +38,7 @@ func main() {
 		build  *builder.Struct
 		conf   *config.Struct
 		app    *fiber.App
-		srv    c2.Server
+		srv    *c2.Server
 		err    error
 	)
 
@@ -54,8 +54,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// create a C2 server
+	srv = c2.New(build, &agents)
+
+	// create a web server
 	app = fiber.New(fiber.Config{
 		AppName:               "ezcat",
+		ServerHeader:          "",
 		DisableStartupMessage: true,
 	})
 
@@ -80,8 +85,8 @@ func main() {
 	})
 
 	// auth and CORS middlewars
-	api.Use(routes.Auth)
-	user.Use(routes.CORS)
+	api.Use(routes.CORS)
+	user.Use(routes.Auth)
 
 	// user API routes
 	user.Get("/logout", routes.GET_logout)
@@ -103,18 +108,29 @@ func main() {
 	// payload routes
 	app.Get("/:id", routes.GET_stage)
 
+	// other routes
+	app.All("*", func(c *fiber.Ctx) error {
+		return c.Redirect("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+	})
+
 	// start the API
 	log.Info("starting ezcat 🐱(v%s)", conf.Version)
 
-	if err = srv.Listen(fmt.Sprintf(":%d", conf.C2_Port)); err != nil {
+	log.Debg("starting the C2 server on port %d", conf.C2_Port)
+
+	if err = srv.Listen(fmt.Sprintf("0.0.0.0:%d", conf.C2_Port)); err != nil {
 		log.Fail("failed to start the C2 server")
+		os.Exit(1)
 	}
 
 	if conf.StaticDir != "" {
 		log.Info("======> visit http://127.0.0.1:%d <======", conf.HTTP_Port)
 	}
 
-	if err = app.Listen(fmt.Sprintf(":%d", conf.HTTP_Port)); err != nil {
+	log.Debg("starting the HTTP server on port %d", conf.HTTP_Port)
+
+	if err = app.Listen(fmt.Sprintf("0.0.0.0:%d", conf.HTTP_Port)); err != nil {
 		log.Fail("failed to start the web server")
+		os.Exit(1)
 	}
 }

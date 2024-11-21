@@ -78,7 +78,7 @@ func (l *List) Update() {
 	}
 }
 
-func (l *List) GetJob(id uint32) (job *Job) {
+func (l *List) GetJob(id uint16) (job *Job) {
 	var cur *Agent
 
 	for i := 0; i < l.len(); i++ {
@@ -92,7 +92,7 @@ func (l *List) GetJob(id uint32) (job *Job) {
 	return nil
 }
 
-func (l *List) DelJob(id uint32) {
+func (l *List) DelJob(id uint16) {
 	for i := 0; i < l.len(); i++ {
 		l.get(i).DelJob(id)
 	}

@@ -10,14 +10,14 @@ import (
 func GET_job(c *fiber.Ctx) error {
 	var (
 		job *agent.Job
-		id  uint32
+		id  uint16
 		err error
 	)
 
 	list := c.Locals("agents").(*agent.List)
 	list.Update()
 
-	if id, err = util.ToUint32(c.Query("id")); err != nil {
+	if id, err = util.ToUint16(c.Query("id")); err != nil {
 		log.Debg("failed to parse job ID: %s", err.Error())
 		return util.Error(c, "Invalid job ID")
 	}
@@ -31,14 +31,14 @@ func GET_job(c *fiber.Ctx) error {
 
 func DEL_job(c *fiber.Ctx) error {
 	var (
-		id  uint32
+		id  uint16
 		err error
 	)
 
 	list := c.Locals("agents").(*agent.List)
 	list.Update()
 
-	if id, err = util.ToUint32(c.Query("id")); err != nil {
+	if id, err = util.ToUint16(c.Query("id")); err != nil {
 		log.Debg("failed to parse job ID: %s", err.Error())
 		return util.Error(c, "Invalid job ID")
 	}

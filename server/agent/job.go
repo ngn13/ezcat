@@ -6,7 +6,7 @@ const (
 )
 
 type Job struct {
-	ID       uint32     `json:"id"`
+	ID       uint16     `json:"id"`
 	Command  byte       `json:"cmd"`
 	Waiting  bool       `json:"waiting"`
 	Success  bool       `json:"success"`

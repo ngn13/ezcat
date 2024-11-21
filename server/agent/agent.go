@@ -1,8 +1,9 @@
 package agent
 
 import (
-	"math/rand"
 	"time"
+
+	"github.com/ngn13/ezcat/server/util"
 )
 
 const AGENT_SLEEP_MAX = 15
@@ -39,7 +40,7 @@ func (a *Agent) UpdateConnected() {
 
 func (a *Agent) AddJob(cmd byte, arg string, cb func(*Job)) *Job {
 	job := Job{
-		ID:       rand.Uint32(),
+		ID:       util.Rand16(),
 		Command:  cmd,
 		Waiting:  true,
 		Success:  false,
@@ -51,7 +52,7 @@ func (a *Agent) AddJob(cmd byte, arg string, cb func(*Job)) *Job {
 	return &a.Job[len(a.Job)-1]
 }
 
-func (a *Agent) GetJob(id uint32) *Job {
+func (a *Agent) GetJob(id uint16) *Job {
 	for i := range a.Job {
 		if a.Job[i].ID == id {
 			return &a.Job[i]
@@ -61,7 +62,7 @@ func (a *Agent) GetJob(id uint32) *Job {
 	return nil
 }
 
-func (a *Agent) DelJob(id uint32) {
+func (a *Agent) DelJob(id uint16) {
 	for i := range a.Job {
 		if a.Job[i].ID == id {
 			a.Job = append(a.Job[:i], a.Job[i+1:]...)

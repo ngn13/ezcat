@@ -4,100 +4,37 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #endif
+#include <errno.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #include <unistd.h>
 
-#include "log.h"
 #include "packet.h"
 #include "util.h"
 
+void print_debug(const char *func, const char *msg, ...) {
+  if (!STAGE_DEBUG)
+    return;
+
+  va_list args;
+  va_start(args, msg);
+
+  printf("[debug] (%s) ", func);
+  vprintf(msg, args);
+  printf("\n");
+
+  va_end(args);
+}
+
 int randint(int min, int max) {
   return min + rand() % (max + 1 - min);
-}
-
-int name_to_qname(char *qname, char **name) {
-  int len = 0, indx = 0;
-  bzero(qname, NAME_LIMIT + 1);
-
-  for (int i = 0; name[i] != NULL; i++) {
-    len = strlen(name[i]);
-
-    if (len > LABEL_LIMIT) {
-      // label is too large
-      return -1;
-    }
-
-    if (indx + len + 1 > NAME_LIMIT) {
-      // name is too large
-      return -1;
-    }
-
-    qname[indx++] = len;
-    memcpy(qname + indx, name[i], len);
-    indx += len;
-  }
-
-  qname[indx] = 0;
-  return indx + 1;
-}
-
-bool parse_addr(char *addr, struct sockaddr_in *ret) {
-  char   *host = NULL, port[6], *c = NULL;
-  ssize_t indx = 0;
-
-  for (c = addr; *c != ':'; c++) {
-    if (*c == 0)
-      return false;
-
-    if (NULL == host)
-      host = malloc(indx + 1);
-    else
-      host = realloc(host, indx + 1);
-
-    host[indx++] = *c;
-    host[indx]   = 0;
-  }
-
-  indx = 0;
-  c++;
-
-  for (; *c != 0; c++) {
-    if (indx + 1 >= 6) {
-      free(host);
-      return false;
-    }
-
-    port[indx++] = *c;
-    port[indx]   = 0;
-  }
-
-  ret->sin_addr.s_addr = inet_addr(host);
-  free(host);
-
-  if (atoi(port) > UINT16_MAX || atoi(port) <= 0)
-    return false;
-
-  ret->sin_port = htons(atoi(port));
-  return true;
-}
-
-char rot13_char(char c) {
-  if (c >= 'A' && c <= 'Z')
-    return 'A' + ((c - 'A' + 13) % 26);
-  else if (c >= 'a' && c <= 'z')
-    return 'a' + ((c - 'a' + 13) % 26);
-  return c;
-}
-
-void rot13(char *rot) {
-  int len = strlen(rot);
-  for (int i = 0; i < len; i++)
-    rot[i] = rot13_char(rot[i]);
 }
 
 bool copy_to_buffer(void *buffer, void *src, size_t size, ssize_t *total, ssize_t *used) {
@@ -140,3 +77,48 @@ void fprintfsock(SOCKET sock, const char *fmt, ...) {
   send(sock, buf, len, 0);
 }
 #endif
+
+bool resolve(struct sockaddr *saddr, char *addr, uint16_t port) {
+  if (NULL == saddr || NULL == addr) {
+    errno = EINVAL;
+    return false;
+  }
+
+  struct addrinfo *res = NULL, *cur = NULL;
+  bool             ret = false;
+
+  if (getaddrinfo(addr, NULL, NULL, &res) < 0)
+    goto end;
+
+  if (NULL == res)
+    goto end;
+
+  for (cur = res; cur != NULL; cur = cur->ai_next) {
+    if (AF_INET == cur->ai_family || AF_INET6 == cur->ai_family)
+      break;
+  }
+
+  if (NULL == cur)
+    goto end;
+
+  memcpy(saddr, cur->ai_addr, sizeof(struct sockaddr));
+
+  switch (saddr->sa_family) {
+  case AF_INET:
+    ((struct sockaddr_in *)saddr)->sin_port = htons(port);
+    break;
+
+  case AF_INET6:
+    ((struct sockaddr_in6 *)saddr)->sin6_port = htons(port);
+    break;
+
+  default:
+    errno = EPROTONOSUPPORT;
+    goto end;
+  }
+
+  ret = true;
+end:
+  freeaddrinfo(res);
+  return ret;
+}

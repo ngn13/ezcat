@@ -57,6 +57,16 @@ func New(conf *config.Struct) (*Struct, error) {
 	return &builder, nil
 }
 
+func (s *Struct) IsValid(id string) bool {
+	for _, i := range s.Builds {
+		if i == id {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (s *Struct) GetPayload(name string) *Payload {
 	for i := range s.Payloads {
 		if s.Payloads[i].Name == name {
@@ -68,13 +78,11 @@ func (s *Struct) GetPayload(name string) *Payload {
 }
 
 func (s *Struct) GetStage(id string) string {
-	for _, i := range s.Builds {
-		if i == id {
-			return ""
-		}
+	if s.IsValid(id) {
+		return path.Join(s.Config.DistDir, id)
 	}
 
-	return path.Join(s.Config.DistDir, id)
+	return ""
 }
 
 func (s *Struct) Create(payload *Payload, target *Target, address string) (string, error) {

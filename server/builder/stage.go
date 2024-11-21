@@ -23,13 +23,13 @@ func (s *Struct) buildStage(b *build) (err error) {
 	}
 
 	options := map[string]string{
-		"ID":          b.ID,
-		"SERVER_HOST": b.Host,
-		"SERVER_PORT": fmt.Sprintf("%d", b.Port),
+		"STAGE_ID":          b.ID,
+		"STAGE_SERVER_HOST": b.Host,
+		"STAGE_SERVER_PORT": fmt.Sprintf("%d", s.Config.C2_Port),
 	}
 
 	if s.Config.Debug {
-		options["DEBUG"] = "1"
+		options["STAGE_DEBUG"] = "1"
 	}
 
 	if out, err := util.RunBuild(builddir, b.Target.CodeName(), options); err != nil {

@@ -203,13 +203,12 @@ func RunBuild(dir string, oscode string, options map[string]string) (string, err
 	)
 
 	cmd := exec.Command("/bin/bash", "build.sh", oscode)
+	cmd.Dir = dir
 
 	if nil != options {
 		for k, v := range options {
-			opt := fmt.Sprintf("-D%s=%s", k, v)
-
+			opt := fmt.Sprintf("%s=%s", k, v)
 			cmd.Args = append(cmd.Args, opt)
-			cmd.Dir = dir
 		}
 	}
 
@@ -264,7 +263,11 @@ func CleanTemp() {
 	}
 }
 
-func ToUint32(s string) (uint32, error) {
+func ToUint16(s string) (uint16, error) {
 	id, err := strconv.ParseUint(s, 10, 32)
-	return uint32(id), err
+	return uint16(id), err
+}
+
+func Rand16() uint16 {
+	return uint16(rand.Intn(math.MaxUint16))
 }

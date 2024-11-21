@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #ifdef _WIN32
@@ -8,44 +9,32 @@
 #include <sys/socket.h>
 #endif
 
-#define REQ_LABEL_LEN 4
-#define LABEL_LIMIT 63
-#define NAME_LIMIT 255
-#define UDP_LIMIT 512
+#define PACKET_MAX_SIZE (255 + 4 + 3)
+#define PACKET_VERSION 0
 
-typedef struct dns_header {
-  uint16_t id;
-  uint16_t flags;
-  uint16_t qdcount;
-  uint16_t ancount;
-  uint16_t nscount;
-  uint16_t arcount;
-} dns_header_t;
+typedef enum {
+  PACKET_TYPE_REQ = 0,
+  PACKET_TYPE_RES = 1,
+} packet_type_t;
 
-typedef struct dns_qd {
-  char   **qname;
-  uint16_t qtype;
-  uint16_t qclass;
-} dns_qd_t;
+typedef struct {
+  struct {
+    uint32_t session; // agent session
+    uint16_t work_id; // ID of the work assoicated with this packet
+    uint8_t  flags;   // version (3 bits), 1 (type), 4 (command)
+    uint8_t  size;    // data size
+  } header;
+  char *data;
+} packet_t;
 
-typedef struct dns_rr {
-  char    *name;
-  uint16_t type;
-  uint16_t class;
-  uint32_t ttl;
-  uint16_t rdlength;
-  char    *rdata;
-} dns_rr_t;
+#define packet_version(p) ((p)->header.flags >> 5)
+#define packet_type(p) ((p)->header.flags >> 4) & 1)
+#define packet_cmd(p) ((p)->header.flags & 0b1111)
 
-typedef struct dns_packet {
-  dns_header_t header;
-  dns_qd_t    *questions;
-  dns_rr_t    *answers;
-  dns_rr_t    *authorities;
-  dns_rr_t    *additionals;
-} dns_packet_t;
+void packet_free(packet_t *packet);
 
-void packet_alloc(dns_packet_t *p);
-void packet_free(dns_packet_t *p);
-bool packet_send(int s, struct sockaddr *addr, dns_packet_t *packet);
-bool packet_recv(int s, struct sockaddr *addr, dns_packet_t *packet);
+void packet_set_flags(packet_t *packet, uint8_t type, uint8_t cmd);
+void packet_set_data(packet_t *packet, char *data, uint8_t size);
+
+bool packet_send(packet_t *packet, int s);
+bool packet_recv(packet_t *packet, int s);
