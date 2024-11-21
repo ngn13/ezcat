@@ -25,7 +25,7 @@ Configuration is handled with environment variables, here are all the options:
 - **`EZCAT_PASSWORD`**: Used to change the login password, by default it's `ezcat`, and for security, you should
 definitely change it
 - **`EZCAT_SHELLIP`**: By default ezcat will try to detect your interface IP address (giving priority to tunnel interfaces).
-If you want set this IP address to something else by default, you can use the `SHELLIP` environment variable
+If you want set this IP address to something else by default, you can use this environment variable
 - **`EZCAT_DISABLE_MEGAMIND`**: When set to `1`, it disables the "no shells?" megamind meme that's displayed on the dashboard if you don't have
 any active shells
 - **`EZCAT_HTTP_PORT`**: Used to change the port that the API server will listen on, default is 5566
