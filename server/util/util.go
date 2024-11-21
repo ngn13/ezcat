@@ -64,14 +64,10 @@ func GetAddr(addrs []net.Addr) string {
 }
 
 func GetIP() string {
-	enip := os.Getenv("SHELLIP")
-	if enip != "" {
-		return enip
-	}
-
 	ip := "127.0.0.1"
 	foundtun := false
 	ifs, err := net.Interfaces()
+
 	if err != nil {
 		return ip
 	}

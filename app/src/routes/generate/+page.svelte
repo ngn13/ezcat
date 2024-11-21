@@ -51,7 +51,7 @@
 
   async function generate(e) {
     e.preventDefault();
-    waiting = "Waiting for the build"
+    waiting = "Waiting for the build";
 
     const res = await PUT(
       fetch,
@@ -68,12 +68,15 @@
       error = res["error"];
     }
 
+    console.info(res["payload"]);
+
     try {
       navigator.clipboard.writeText(res["payload"]);
+      success = "Copied payload to the clipboard";
     } catch (error) {
       error = "Failed to copy payload to the clipboard";
+      alert(res["payload"]);
     }
-    success = "Copied payload to the clipboard";
 
     setTimeout(async () => {
       await goto("/");

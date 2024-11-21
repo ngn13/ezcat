@@ -18,15 +18,21 @@ func GET_payloads(c *fiber.Ctx) error {
 func GET_address(c *fiber.Ctx) error {
 	conf := c.Locals("config").(*config.Struct)
 	port := c.Query("port")
+	ip := conf.ShellIP
+
+	// if IP is not set in environment, try to detect it
+	if ip == "" {
+		ip = util.GetIP()
+	}
 
 	if port == "" {
 		return c.JSON(&fiber.Map{
-			"address": fmt.Sprintf("%s:%d", util.GetIP(), conf.HTTP_Port),
+			"address": fmt.Sprintf("%s:%d", ip, conf.HTTP_Port),
 		})
 	}
 
 	return c.JSON(&fiber.Map{
-		"address": fmt.Sprintf("%s:%s", util.GetIP(), port),
+		"address": fmt.Sprintf("%s:%s", ip, port),
 	})
 }
 

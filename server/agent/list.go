@@ -3,29 +3,28 @@ package agent
 import (
 	"math/rand"
 	"time"
-	"unsafe"
+
+	"github.com/ngn13/ezcat/server/log"
 )
 
-type List []Agent
+type List struct {
+	Agents []Agent
+}
 
 func (l *List) add(agent Agent) {
-	agent_list := *((*[]Agent)(unsafe.Pointer(l)))
-	agent_list = append(agent_list, agent)
+	l.Agents = append(l.Agents, agent)
 }
 
 func (l *List) len() int {
-	agent_list := *((*[]Agent)(unsafe.Pointer(l)))
-	return len(agent_list)
+	return len(l.Agents)
 }
 
 func (l *List) get(i int) *Agent {
-	agent_list := *((*[]Agent)(unsafe.Pointer(l)))
-	return &agent_list[i]
+	return &l.Agents[i]
 }
 
 func (l *List) del(i int) {
-	agent_list := *((*[]Agent)(unsafe.Pointer(l)))
-	agent_list = append(agent_list[:i], agent_list[i+1:]...)
+	l.Agents = append(l.Agents[:i], l.Agents[i+1:]...)
 }
 
 func (l *List) New() *Agent {
@@ -34,6 +33,8 @@ func (l *List) New() *Agent {
 		LastCon:    time.Now(),
 		Conneceted: true,
 	}
+
+	log.Debg("registered a new agent (session: %v)", agent.Session)
 
 	l.add(agent)
 	return l.get(l.len() - 1)
@@ -59,22 +60,11 @@ func (l *List) Remove(s uint32) {
 }
 
 func (l *List) Update() {
-	var (
-		ids []uint32
-		cur *Agent
-	)
+	var cur *Agent
 
 	for i := 0; i < l.len(); i++ {
 		cur = l.get(i)
 		cur.UpdateConnected()
-
-		if !cur.Conneceted {
-			ids = append(ids, cur.Session)
-		}
-	}
-
-	for _, id := range ids {
-		l.Remove(id)
 	}
 }
 
@@ -96,4 +86,16 @@ func (l *List) DelJob(id uint16) {
 	for i := 0; i < l.len(); i++ {
 		l.get(i).DelJob(id)
 	}
+}
+
+func (l *List) Ready() []*Agent {
+	var res []*Agent
+
+	for i := 0; i < l.len(); i++ {
+		if cur := l.get(i); cur.Conneceted && cur.Hostname != "" && cur.Username != "" {
+			res = append(res, cur)
+		}
+	}
+
+	return res
 }

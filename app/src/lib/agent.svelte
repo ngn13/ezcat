@@ -11,13 +11,13 @@
   async function checkjob(id) {
     const res = await getjob(fetch, id);
 
-    if (res["active"]) {
-      waiting = res["message"];
-    } else if (!res["active"] && res["success"]) {
-      success = res["message"];
+    if (res["waiting"]) {
+      waiting = "Waiting for response";
+    } else if (!res["waiting"] && res["success"]) {
+      success = `Got a successful response: ${res["message"]}`;
       return await deljob(fetch, id);
-    } else if (!res["active"] && !res["success"]) {
-      error = res["message"];
+    } else if (!res["waiting"] && !res["success"]) {
+      error = `Got a failure response: ${res["message"]}`;
       return await deljob(fetch, id);
     }
 
@@ -27,14 +27,14 @@
   }
 
   async function run() {
-    await goto(`/run/${data.id}`);
+    await goto(`/run/${data.session}`);
   }
 
   async function kill() {
-    const res = await GET(fetch, `user/agent/kill?id=${data.id}`, true);
+    const res = await GET(fetch, `user/agent/kill?session=${data.session}`, true);
 
     if (res["error"] != undefined) {
-      error = res["error"];
+      error = `Request failed: ${res["error"]}`;
       return;
     }
 
@@ -51,7 +51,7 @@
       <h1>[{data.username}@{data.hostname}]</h1>
       <div class="detail">
         <h3>System</h3>
-        <p>{data.kernel}</p>
+        <p>{data.os}</p>
       </div>
       <div class="detail">
         <h3>Address</h3>

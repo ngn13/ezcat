@@ -4,11 +4,12 @@
 
 typedef struct {
   uint32_t session;
+  uint16_t job_id;
   int      socket;
 } agent_t;
 
-#define agent_recv(a, p) packet_recv(p, a->socket)
-#define agent_send(a, p) packet_send(p, a->socket)
+bool agent_send(agent_t *agent, packet_t *packet);
+bool agent_recv(agent_t *agent, packet_t *packet);
 
 bool agent_connect(agent_t *agent);
 void agent_disconnect(agent_t *agent);

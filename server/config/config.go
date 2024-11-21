@@ -17,6 +17,7 @@ type Struct struct {
 	StaticDir  string `env:"STATIC_DIR"`
 	DistDir    string `env:"DIST_DIR"`
 	PayloadDir string `env:"PAYLOAD_DIR"`
+	ShellIP    string `env:"SHELLIP"`
 	Megamind   bool   `env:"MEGAMIND"`
 	Debug      bool   `env:"DEBUG"`
 }

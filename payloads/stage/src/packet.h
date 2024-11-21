@@ -3,11 +3,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#ifdef _WIN32
-#include <winsock2.h>
-#else
-#include <sys/socket.h>
-#endif
 
 #define PACKET_MAX_SIZE (255 + 4 + 3)
 #define PACKET_VERSION 0
@@ -19,13 +14,13 @@ typedef enum {
 
 typedef struct {
   struct {
-    uint32_t session; // agent session
-    uint16_t work_id; // ID of the work assoicated with this packet
     uint8_t  flags;   // version (3 bits), 1 (type), 4 (command)
+    uint32_t session; // agent session
+    uint16_t job_id;  // ID of the job assoicated with this packet
     uint8_t  size;    // data size
-  } header;
-  char *data;
-} packet_t;
+  } __attribute__((packed)) header;
+  char                     *data;
+} __attribute__((packed)) packet_t;
 
 #define packet_version(p) ((p)->header.flags >> 5)
 #define packet_type(p) ((p)->header.flags >> 4) & 1)

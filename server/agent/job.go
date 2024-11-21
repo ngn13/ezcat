@@ -1,17 +1,14 @@
 package agent
 
-const (
-	CMD_RUN  byte = 'R'
-	CMD_KILL byte = 'K'
-)
-
 type Job struct {
-	ID       uint16     `json:"id"`
-	Command  byte       `json:"cmd"`
-	Waiting  bool       `json:"waiting"`
-	Success  bool       `json:"success"`
-	Argument string     `json:"argument"`
-	Response string     `json:"response"`
-	Callback func(*Job) `json:"-"`
-	Agent    *Agent     `json:"-"`
+	ID           uint16
+	Command      byte
+	Waiting      bool
+	Success      bool
+	Argument     []byte
+	ArgumentSize uint8
+	Response     []byte
+	ResponseSize uint8
+	Callback     func(*Job)
+	Agent        *Agent
 }

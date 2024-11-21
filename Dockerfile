@@ -36,8 +36,8 @@ COPY payloads       ./payloads
 COPY docker/init.sh ./
 
 RUN chmod +x "init.sh"
-ENV STATIC_DIR "./static"
-ENV PAYLOAD_DIR "./payloads"
+ENV EZCAT_STATIC_DIR "./static"
+ENV EZCAT_PAYLOAD_DIR "./payloads"
 
 ARG API_URL
 ENV API_URL $API_URL

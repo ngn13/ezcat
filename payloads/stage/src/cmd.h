@@ -1,14 +1,28 @@
 #pragma once
-#include "agent.h"
 #include <stdbool.h>
+#include <stdint.h>
+
+#include "agent.h"
 
 typedef enum {
-  CMD_SUCCESS  = 0,
-  CMD_REGISTER = 1,
-  CMD_KILL     = 2,
-  CMD_RUN      = 3,
+  CMD_FAILURE  = 0,
+  CMD_SUCCESS  = 1,
+  CMD_REGISTER = 2,
+  CMD_KILL     = 3,
+  CMD_RUN      = 4,
+  CMD_ASK      = 5,
+  CMD_INFO     = 6,
+  CMD_NONE     = 7,
+  CMD_AUTH     = 8,
 } cmd_t;
 
-bool cmd_handle(agent_t *agent);
 bool cmd_register(agent_t *agent);
-bool cmd_send(agent_t *agent, cmd_t cmd);
+bool cmd_handle(agent_t *agent);
+
+// command helpers
+bool cmd_success(agent_t *agent, char *data, uint8_t data_size);
+bool cmd_failure(agent_t *agent, char *data, uint8_t data_size);
+
+// command handlers
+bool cmd_info_handler(agent_t *agent, packet_t *packet);
+bool cmd_run_handler(agent_t *agent, packet_t *packet);

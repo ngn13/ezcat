@@ -24,5 +24,6 @@ jobs:
 
       - name: 'Build Inventory Image'
         run: |
-          docker build . --tag ghcr.io/ngn13/ezcat:latest
+          docker build . --tag ghcr.io/ngn13/ezcat:latest --tag ghcr.io/ngn13/ezcat:${GITHUB_REF##*/}
+          docker push ghcr.io/ngn13/ezcat:${GITHUB_REF##*/}
           docker push ghcr.io/ngn13/ezcat:latest

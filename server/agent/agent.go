@@ -38,14 +38,37 @@ func (a *Agent) UpdateConnected() {
 	}
 }
 
-func (a *Agent) AddJob(cmd byte, arg string, cb func(*Job)) *Job {
+func (a *Agent) NextJob() *Job {
+	var job *Job = nil
+
+	for i := range a.Job {
+		if job = &a.Job[i]; !job.Waiting {
+			job = nil
+			continue
+		}
+	}
+
+	return job
+}
+
+func (a *Agent) AddJob(cmd byte, arg []byte, arg_size uint8, cb func(*Job)) *Job {
+	if nil != arg && arg_size == 0 {
+		arg_size = uint8(len(arg))
+	}
+
+	if nil == arg {
+		arg_size = 0
+	}
+
 	job := Job{
-		ID:       util.Rand16(),
-		Command:  cmd,
-		Waiting:  true,
-		Success:  false,
-		Argument: arg,
-		Callback: cb,
+		ID:           util.Rand16(),
+		Command:      cmd,
+		Waiting:      true,
+		Success:      false,
+		Argument:     arg,
+		ArgumentSize: arg_size,
+		Callback:     cb,
+		Agent:        a,
 	}
 
 	a.Job = append(a.Job, job)

@@ -23,8 +23,8 @@ void packet_set_flags(packet_t *packet, uint8_t type, uint8_t cmd) {
   packet->header.flags = 0;
 
   packet->header.flags |= (cmd & 0b1111);
-  packet->header.flags |= 4 << (type & 1);
-  packet->header.flags |= 5 << (PACKET_VERSION & 0b111);
+  packet->header.flags |= (type & 1) << 4;
+  packet->header.flags |= (PACKET_VERSION & 0b111) << 5;
 }
 
 void packet_set_data(packet_t *packet, char *data, uint8_t size) {
@@ -47,31 +47,24 @@ void packet_set_data(packet_t *packet, char *data, uint8_t size) {
   }
 
   packet->header.size = size;
-  packet->data        = malloc(size);
+  packet->data        = malloc(size + 1);
+
+  bzero(packet->data, size + 1);
   memcpy(packet->data, data, size);
 }
 
 bool packet_send(packet_t *packet, int s) {
-  ssize_t  total = PACKET_MAX_SIZE, used = 0;
-  char     buffer[total];
-  packet_t copy;
+  char buffer[PACKET_MAX_SIZE], *bufp = buffer;
 
-  copy.header.flags   = htons(packet->header.flags);
-  copy.header.session = htonl(packet->header.session);
-  copy.header.work_id = htons(packet->header.work_id);
-  copy.header.size    = htons(packet->header.size);
+  packet->header.session = htonl(packet->header.session);
+  packet->header.job_id  = htons(packet->header.job_id);
 
-  if (!copy_to_buffer(buffer, &copy.header, sizeof(copy.header), &total, &used)) {
-    debug("failed to copy header to the buffer (possible overflow)");
-    return false;
-  }
+  bufp = copy_to(bufp, &packet->header, sizeof(packet->header));
+  bufp = copy_to(bufp, packet->data, packet->header.size);
 
-  if (copy.header.size != 0 && !copy_to_buffer(buffer, copy.data, copy.header.size, &total, &used)) {
-    debug("failed to copy data to the buffer (possible overflow)");
-    return false;
-  }
+  dump(buffer, bufp - buffer);
 
-  if (send(s, buffer, used, 0) <= 0) {
+  if (send(s, buffer, bufp - buffer, 0) <= 0) {
     debug("send failed: %s", strerror(errno));
     return false;
   }
@@ -80,44 +73,37 @@ bool packet_send(packet_t *packet, int s) {
 }
 
 bool packet_recv(packet_t *packet, int s) {
-  ssize_t total = PACKET_MAX_SIZE, used = 0;
-  char    buffer[total];
+  char    buffer[PACKET_MAX_SIZE], *bufp = buffer;
+  int64_t size = 0;
 
 #ifdef _WIN32
-  if ((total = recvfrom(s, buffer, UDP_LIMIT, 0, addr, &addrlen)) == SOCKET_ERROR) {
+  if ((size = recv(s, buffer, PACKET_MAX_SIZE, 0)) == SOCKET_ERROR) {
 #else
-  if ((total = recv(s, buffer, PACKET_MAX_SIZE, 0)) <= 0) {
+  if ((size = recv(s, buffer, PACKET_MAX_SIZE, 0)) <= 0) {
 #endif
     debug("recv failed: %s", strerror(errno));
     return false;
   }
 
-  if (!copy_from_buffer(&packet->header, buffer, sizeof(packet->header), &total, &used)) {
-    debug("failed to copy buffer to the header (possible overflow)");
-    return false;
-  }
+  dump(buffer, size);
 
-  packet->header.flags   = ntohs(packet->header.flags);
+  bufp = copy_from(&packet->header, bufp, sizeof(packet->header));
+
   packet->header.session = ntohl(packet->header.session);
-  packet->header.work_id = ntohs(packet->header.work_id);
-  packet->header.size    = htons(packet->header.size);
+  packet->header.job_id  = ntohs(packet->header.job_id);
 
   if (packet_version(packet) != PACKET_VERSION) {
     debug("version mismatch");
     return false;
   }
 
-  if ((packet->data = malloc(packet->header.size)) == NULL) {
+  if ((packet->data = malloc(packet->header.size + 1)) == NULL) {
     debug("failed to allocate data buffer (size: %u)", packet->header.size);
     return false;
   }
 
-  if (!copy_from_buffer(packet->data, buffer, packet->header.size, &total, &used)) {
-    debug("failed to copy buffer to the data buffer (possible overflow)");
-    free(packet->data);
-    packet->data = NULL;
-    return false;
-  }
+  bzero(packet->data, packet->header.size + 1);
+  bufp = copy_from(packet->data, bufp, packet->header.size);
 
   return true;
 }

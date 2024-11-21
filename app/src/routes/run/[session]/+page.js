@@ -9,6 +9,6 @@ export async function load({ fetch, params }) {
 
   return {
     address: address["address"],
-    id: params.id,
+    session: params.session,
   };
 }

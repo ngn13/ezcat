@@ -26,7 +26,17 @@ func GET_job(c *fiber.Ctx) error {
 		return util.Error(c, "Job not found")
 	}
 
-	return c.JSON(job)
+	res := fiber.Map{
+		"id":      job.ID,
+		"waiting": job.Waiting,
+		"success": job.Success,
+	}
+
+	if job.Response != nil {
+		res["message"] = string(job.Response)
+	}
+
+	return c.JSON(&res)
 }
 
 func DEL_job(c *fiber.Ctx) error {
@@ -44,5 +54,5 @@ func DEL_job(c *fiber.Ctx) error {
 	}
 
 	list.DelJob(id)
-	return c.JSON(&fiber.Map{})
+	return c.JSON(nil)
 }
