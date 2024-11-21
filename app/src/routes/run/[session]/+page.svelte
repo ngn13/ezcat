@@ -14,17 +14,18 @@
   async function checkjob(id) {
     const res = await getjob(fetch, id);
 
-    if (res["active"]) {
-      waiting = res["message"];
-    } else if (!res["active"] && res["success"]) {
-      success = res["message"];
-      await deljob(fetch, id);
+    if (res["waiting"]) {
+      waiting = "Waiting for response";
+    } else if (!res["waiting"] && res["success"]) {
+      success = `Got a successful response: ${res["message"]}`;
+    } else if (!res["waiting"] && !res["success"]) {
+      error = `Got a failure response: ${res["message"]}`;
+    }
 
+    if (!res["waiting"]) {
       setTimeout(async () => {
         await goto("/");
       }, 2000);
-    } else if (!res["active"] && !res["success"]) {
-      error = res["message"];
       return await deljob(fetch, id);
     }
 
@@ -40,13 +41,13 @@
       "user/agent/run",
       {
         address: host,
-        id: data.id,
+        session: data.session,
       },
       true
     );
 
     if (res["error"] != undefined) {
-      error = res["error"];
+      error = `Request failed: ${res["error"]}`;
       return;
     }
 

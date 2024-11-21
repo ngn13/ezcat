@@ -1,5 +1,5 @@
 <script>
-  import { PUT, getjob, deljob } from "../../lib/api.js";
+  import { PUT } from "../../lib/api.js";
   import Cardbar from "../../lib/cardbar.svelte";
   import Select from "../../lib/select.svelte";
   import Input from "../../lib/input.svelte";
@@ -49,35 +49,10 @@
     get_types();
   }
 
-  async function checkjob(id) {
-    const res = await getjob(fetch, id);
-
-    if (res["active"]) {
-      waiting = res["message"];
-    } else if (!res["active"] && res["success"]) {
-      try {
-        navigator.clipboard.writeText(res["message"]);
-      } catch (error) {
-        error = "Failed to copy payload to the clipboard";
-      }
-      success = "Copied payload to the clipboard";
-      await deljob(fetch, id);
-
-      setTimeout(async () => {
-        await goto("/");
-      }, 2000);
-    } else if (!res["active"] && !res["success"]) {
-      error = res["message"];
-      return await deljob(fetch, id);
-    }
-
-    setTimeout(async () => {
-      await checkjob(id);
-    }, 2000);
-  }
-
   async function generate(e) {
     e.preventDefault();
+    waiting = "Waiting for the build";
+
     const res = await PUT(
       fetch,
       "user/payload/build",
@@ -93,10 +68,19 @@
       error = res["error"];
     }
 
-    await checkjob(res["job"]);
+    console.info(res["payload"]);
+
+    try {
+      navigator.clipboard.writeText(res["payload"]);
+      success = "Copied payload to the clipboard";
+    } catch (error) {
+      error = "Failed to copy payload to the clipboard";
+      alert(res["payload"]);
+    }
+
     setTimeout(async () => {
-      await checkjob(res["job"]);
-    }, 2000);
+      await goto("/");
+    }, 2500);
   }
 
   payloads.forEach((p) => {

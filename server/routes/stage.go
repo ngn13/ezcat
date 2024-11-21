@@ -2,19 +2,24 @@ package routes
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/ngn13/ezcat/server/payload"
+	"github.com/ngn13/ezcat/server/builder"
 )
 
 func GET_stage(c *fiber.Ctx) error {
-  id := c.Params("id")
-  if id == "" {
-    return c.Status(404).SendString("not found")
-  }
-  
-  stpath := payload.StageGet(id)
-  if stpath == "" {
-    return c.Status(404).SendString("not found")
-  }
+	var (
+		id         string
+		stage_path string
+	)
 
-  return c.SendFile(stpath)
+	build := c.Locals("builder").(*builder.Struct)
+
+	if id = c.Params("id"); id == "" {
+		return c.Status(404).SendString("not found")
+	}
+
+	if stage_path = build.GetStage(id); stage_path == "" {
+		return c.Status(404).SendString("not found")
+	}
+
+	return c.SendFile(stage_path)
 }

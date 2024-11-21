@@ -3,32 +3,56 @@ package routes
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/ngn13/ezcat/server/agent"
-	"github.com/ngn13/ezcat/server/jobs"
+	"github.com/ngn13/ezcat/server/log"
 	"github.com/ngn13/ezcat/server/util"
 )
 
 func GET_job(c *fiber.Ctx) error {
-  agent.Clean()
+	var (
+		job *agent.Job
+		id  uint16
+		err error
+	)
 
-  id := c.Query("id")
-  if id == "" {
-    return util.Error(c, "Job ID is not specified")
-  }
+	list := c.Locals("agents").(*agent.List)
+	list.Update()
 
-  job := jobs.Get(id)
-  if job == nil {
-    return util.Error(c, "Job not found")
-  }
+	if id, err = util.ToUint16(c.Query("id")); err != nil {
+		log.Debg("failed to parse job ID: %s", err.Error())
+		return util.Error(c, "Invalid job ID")
+	}
 
-  return c.JSON(job)
+	if job = list.GetJob(id); job == nil {
+		return util.Error(c, "Job not found")
+	}
+
+	res := fiber.Map{
+		"id":      job.ID,
+		"waiting": job.Waiting,
+		"success": job.Success,
+	}
+
+	if job.Response != nil {
+		res["message"] = string(job.Response)
+	}
+
+	return c.JSON(&res)
 }
 
 func DEL_job(c *fiber.Ctx) error {
-  id := c.Query("id")
-  if id == "" {
-    return util.Error(c, "Job ID is not specified")
-  }
+	var (
+		id  uint16
+		err error
+	)
 
-  jobs.Del(id)
-  return c.JSON(&fiber.Map{})
+	list := c.Locals("agents").(*agent.List)
+	list.Update()
+
+	if id, err = util.ToUint16(c.Query("id")); err != nil {
+		log.Debg("failed to parse job ID: %s", err.Error())
+		return util.Error(c, "Invalid job ID")
+	}
+
+	list.DelJob(id)
+	return c.JSON(nil)
 }
