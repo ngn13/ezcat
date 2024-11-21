@@ -39,7 +39,4 @@ RUN chmod +x "init.sh"
 ENV EZCAT_STATIC_DIR "./static"
 ENV EZCAT_PAYLOAD_DIR "./payloads"
 
-ARG API_URL
-ENV API_URL $API_URL
-
 ENTRYPOINT ["dumb-init", "./init.sh"]

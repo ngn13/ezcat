@@ -58,7 +58,7 @@ func (conf *Struct) Load() error {
 		case reflect.String:
 			field_val.SetString(env_val)
 
-		case reflect.Uint16:
+		case reflect.Int:
 			var env_val_int int
 			if env_val_int, err = strconv.Atoi(env_val); err != nil {
 				return fmt.Errorf("%s should be an integer", env_name)

@@ -30,6 +30,8 @@ func (s *Struct) buildStage(b *build) (err error) {
 
 	if s.Config.Debug {
 		options["STAGE_DEBUG"] = "1"
+	} else {
+		options["STAGE_DEBUG"] = "0"
 	}
 
 	if out, err := util.RunBuild(builddir, b.Target.CodeName(), options); err != nil {
