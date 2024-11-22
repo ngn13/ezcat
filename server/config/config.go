@@ -87,7 +87,7 @@ func New() (*Struct, error) {
 		err  error
 	)
 
-	conf.Version = "2.4"
+	conf.Version = "2.5"
 	conf.HTTP_Port = 5566
 	conf.C2_Port = 5567
 	conf.Password = "ezcat"
